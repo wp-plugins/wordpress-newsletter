@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Wordpress Newsletter
-Plugin URI: http://www.smallwebsitehost.com/wordpress-newsletter
+Plugin URI: http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress
 Description: Create a  form to collect subscription requests and send email to the mailing lists. 
 Version: 1.0
 Autdor: Ian Sani
@@ -50,7 +50,7 @@ function wpnewsletter_show_optin_form() {
 	$out .= '<tr><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
 	$out .= '<tr><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
 	$out .= '<tr><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr>';
-	$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'</td></tr>';
+	$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank">Newsletter plugin</a></small></td></tr>';
 	$out .='</table></form>';
 	echo $out;
 }
@@ -121,7 +121,6 @@ function wpnewsletter_opt_in() {
 				//create activation link
 				$url = get_bloginfo('wpurl') .'/wp-content/plugins/newsletter/newsletter.php?';
 			
-				$wpnewsletter_date = date("Y-m-d H:m:s");
 				$wpnewsletter_ip = wpnewsletter_getip();
 				
 				$url .= "kei=".md5($email.$name);
@@ -133,8 +132,6 @@ function wpnewsletter_opt_in() {
 				$headers .= "From: $blogname <$email_from>\n";
 				$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\n";
 		
-				$wpnewsletter_date = date("Y-m-d H:m:s");
-				$wpnewsletter_ip = wpnewsletter_getip();
 				$selectqry = "SELECT * FROM " . $table_users . " WHERE `email` = '" . $email ."'";
 				if ($wpdb->query($selectqry)) {
 					echo stripslashes(get_option('wpnewsletter_msg_dup'));
@@ -145,7 +142,7 @@ function wpnewsletter_opt_in() {
 							$query = "INSERT INTO " . $table_users . " 
 								(joindate, ip, email, joinstatus, name) 
 								VALUES (
-								'" . $wpnewsletter_date . "',
+								now(),
 								'" . $wpnewsletter_ip . "',
 								'" . $email . "',0,
 								'" . $name . "'	)";
@@ -166,7 +163,6 @@ function wpnewsletter_optin_confirm() {
 require_once('setting.php');
 	global $wpdb;
 
-
 	mysql_connect($dbhost, $dbuser, $dbpass) or die("koneksi gagal");
 	mysql_select_db($dbname);
 	
@@ -174,20 +170,27 @@ require_once('setting.php');
 
 	$wpnewsletter_ip = checkValid($wpnewsletter_ip );
 
-	$sql = "SELECT * FROM `wp_newsletter_users` WHERE MD5(CONCAT(`email`, `name`)) = '" . $wpnewsletter_ip ."' AND `joinstatus` = '0'";
+	if($_GET['type']=='remove')
+	{
+		$sql = "SELECT * FROM `" . $dbprefix . "newsletter_users` WHERE MD5(CONCAT(`email`, `name`)) = '" . $wpnewsletter_ip ."'";
 
-	$result = mysql_query($sql );
+		$result = mysql_query($sql );
 
-	if ($result) {
-		$row = mysql_fetch_assoc($result);
+		if ($result) {
+			$row = mysql_fetch_assoc($result);
 
-		if($row['id'])
-		{
+			if($row['id'])
+			{
 
-			$update = "UPDATE wp_newsletter_users SET `joinstatus` = '1' WHERE `id` = ". $row['id'];
-			$result = mysql_query($update );
+				$update = "UPDATE " . $dbprefix . "newsletter_users SET `joinstatus` = '3' WHERE `id` = ". $row['id'];
+				$result = mysql_query($update );
 
-			echo("Thank you. You are subscribed now!");
+				echo("You are unsubscribed now!");
+			}
+			else
+			{
+				echo("Failed to verify your email. There is no such user.");
+			}
 		}
 		else
 		{
@@ -196,7 +199,30 @@ require_once('setting.php');
 	}
 	else
 	{
-		echo("Failed to verify your email.");
+		$sql = "SELECT * FROM `". $dbprefix . "newsletter_users` WHERE MD5(CONCAT(`email`, `name`)) = '" . $wpnewsletter_ip ."' AND `joinstatus` = '0'";
+
+		$result = mysql_query($sql );
+
+		if ($result) {
+			$row = mysql_fetch_assoc($result);
+
+			if($row['id'])
+			{
+
+				$update = "UPDATE " . $dbprefix . "newsletter_users SET `joinstatus` = '1' WHERE `id` = ". $row['id'];
+				$result = mysql_query($update );
+
+				echo("Thank you. You are subscribed now!");
+			}
+			else
+			{
+				echo("Failed to verify your email.");
+			}
+		}
+		else
+		{
+			echo("Failed to verify your email.");
+		}
 	}
 }
 
@@ -346,12 +372,20 @@ function wpnewsletter_settings() {
 		$headers .= "From: $blogname <$email_from>\n";
 		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\n";
 
-		$users = $wpdb->get_results("SELECT * FROM $table_users ORDER BY `id` DESC");
+		$users = $wpdb->get_results("SELECT * FROM $table_users where joinstatus=1 ORDER BY `id` DESC");
 
 		foreach ($users as $user) {
 			$message = str_replace("*name*", $user->name, $message);
 			$subject = str_replace("*name*", $user->name, $subject);
 
+				$url = get_bloginfo('wpurl') .'/wp-content/plugins/newsletter/newsletter.php?type=remove&';
+			
+				$wpnewsletter_ip = wpnewsletter_getip();
+				
+				$url .= "kei=".md5($user->email.$user->name);
+
+				$message .= "\n\nYou can unsubscribe at ". $url;
+				
 				if (@wp_mail($user->email,$subject,$message,$headers)) {
 					echo "Emailed to " . $user->email."<br/>";		
 				}
@@ -468,9 +502,15 @@ function wpnewsletter_settings() {
 			}
 			$user_no=$user_no+1;
 			echo "<td>$user->id</td>";
-			echo "<td>" . date(get_option('date_format'), $user->time). " " . date(get_option('time_format'), $user->time) . "</td>";
+			echo "<td>" . $user->joindate . "</td>";
 			echo "<td>";
-			echo $user->joinstatus ? "Yes" : "No";
+			if($user->joinstatus == 1)
+				echo "Yes";
+			else if($user->joinstatus == 0)
+				echo "No";
+			else if ($user->joinstatus == 3)
+				echo "Removed";
+				
 			echo "</td>";
 			echo "<td>$user->ip</td>";
 			echo "<td>$user->name</td>";
