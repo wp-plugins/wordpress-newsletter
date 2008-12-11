@@ -241,7 +241,7 @@ function wpnewsletter_install() {
   			`ip` varchar(50) NOT NULL default '',
   			`name` varchar(50) NOT NULL default '',
  			`email` varchar(100) NOT NULL default '',
-			`joinstatus` bit NOT NULL default 0,
+			`joinstatus` int NOT NULL default 0,
   			UNIQUE KEY `id` (`id`)
 		);";
 		$result = $wpdb->query($sql);
@@ -375,8 +375,11 @@ function wpnewsletter_settings() {
 		$users = $wpdb->get_results("SELECT * FROM $table_users where joinstatus=1 ORDER BY `id` DESC");
 
 		foreach ($users as $user) {
-			$message = str_replace("*name*", $user->name, $message);
-			$subject = str_replace("*name*", $user->name, $subject);
+				$subject = stripslashes($_POST['wpnewsletter_subject']);
+				$message = stripslashes($_POST['wpnewsletter_message']);
+
+				$message = str_replace("*name*", $user->name, $message);
+				$subject = str_replace("*name*", $user->name, $subject);
 
 				$url = get_bloginfo('wpurl') .'/wp-content/plugins/newsletter/newsletter.php?type=remove&';
 			
@@ -397,7 +400,136 @@ function wpnewsletter_settings() {
 	}
 ?>
 <div class="wrap">
-  <h2>Newsletter</h2>
+<h2>Send email</h2>
+	<form action="" method="post">
+    <input type="hidden" name="process" value="email" />
+	<table width="100%"><tr><td>Subject:</td><td><input type="text" name="wpnewsletter_subject" id="wpnewsletter_subject" size="100"/></td></tr>
+	<tr><td>Message: <br/>Type <b>*name*</b> to set the username</td><td><textarea rows=10 cols=100 name="wpnewsletter_message" id="wpnewsletter_message"/></textarea></td></tr></table>
+	<p class="submit"><input type="submit" value="Send Newsletter"/></p></form>	
+</div>
+<div class="wrap">
+<?php 
+	$typequery = $_GET['type'];
+	if( $typequery == '0')
+		echo ('<h2>Not Opted-in User</h2>');
+	else if( $typequery == '1')
+		echo ('<h2>Opted-in User</h2>');
+	else if( $typequery == '3')
+		echo ('<h2>Removed User</h2>');
+?>
+
+<a href="options-general.php?page=newsletter/newsletter.php">Show all</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=1">Show Only Opt-in</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=0">Show Not Opt-in</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=3">Show Removed user</a><br/><br/>
+<?php
+
+	if($typequery !='')
+		$typequery = ' where joinstatus = ' . $typequery;
+		
+	if ($users = $wpdb->get_results("SELECT * FROM $table_users $typequery ORDER BY `id` DESC")) {
+		$user_no=0;
+		$url = get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=newsletter/' .
+			basename(__FILE__);
+?>
+<table class="widefat">
+<thead>    
+<tr>
+<td scope="col">ID</td>
+<td scope="col">Date Join</td>
+<td scope="col">Opted-in</td>
+<td scope="col">IP</td>
+<td scope="col">Name</td>
+<td scope="col">E-mail</td>
+<td scope="col">Action</td>
+</tr>
+</thead>
+<tbody>
+<?php
+		$url = $url . '&amp;user_id=';
+		$offset=$_GET[offset];
+		checkValid($offset);
+		
+		if($offset =='')
+			$offset = 1;
+			
+		$limit = 50;
+		
+		$pagenumber =intval(count($users)/$limit);
+		if(count($users)%$limit)
+		{
+			$pagenumber++;
+		}
+
+		//paging
+		echo("Page: ");
+		for($i=1;$i<=$pagenumber;$i++)
+		{
+			$newpage=$limit*($i-1);
+
+			if($offset!=$newpage)
+			{
+				echo "[<a href='options-general.php?page=newsletter/newsletter.php&type=".$_GET['type']. "&offset=".$newpage."'>$i</a>]";
+			}else
+			{
+				echo "[$i]";
+			}
+		}
+		
+		for($i=$offset;$i<$offset+$limit;$i++)
+		{
+			$user = $users[$i];
+			//check if we need to print
+			if(!$user->joindate)
+				continue;
+					
+			if ($user_no&1) {
+				echo "<tr class=\"alternate\">";
+			} else {
+				echo "<tr>";
+			}
+			$user_no=$user_no+1;
+			echo "<td>$user->id</td>";
+			echo "<td>" . $user->joindate . "</td>";
+			echo "<td>";
+			if($user->joinstatus == 1)
+				echo "Yes";
+			else if($user->joinstatus == 0)
+				echo "No";
+			else if ($user->joinstatus == 3)
+				echo "Removed";
+				
+			echo "</td>";
+			echo "<td>$user->ip</td>";
+			echo "<td>$user->name</td>";
+			echo "<td>$user->email</td>";
+			echo "<td><a href=\"$url$user->id\" onclick=\"if(confirm('Are you sure you want to delete user witd ID $user->id?')) return; else return false;\">Delete</a></td>";
+			echo "</tr>";
+		}
+
+		//paging
+?>
+</tbody>
+</table>
+<?php
+		echo("Page: ");
+		for($i=1;$i<=$pagenumber;$i++)
+		{
+			$newpage=$limit*($i-1);
+
+			if($offset!=$newpage)
+			{
+				echo "[<a href='options-general.php?page=newsletter/newsletter.php&type=".$_GET['type']. "&offset=".$newpage."'>$i</a>]";
+			}else
+			{
+				echo "[$i]";
+			}
+		}
+?>
+<p><em>How to use</em>: insert this code in your pages: &lt;?php wpnewsletter_opt_in(); ?&gt;</p></div>
+<?php
+	}
+?>
+<div class="wrap">
+<h2>Newsletter</h2>
+
 <form method="post" action="">
     <input type="hidden" name="process" value="edit" />
     <fieldset class="options"> <legend>General</legend> 
@@ -463,67 +595,6 @@ function wpnewsletter_settings() {
 <p class="submit"><input type="submit" name="Submit" value="Update Settings &raquo;" /></p>
 </form>
 </div>
-<div class="wrap">
-<h2>Send email</h2>
-	<form action="" method="post">
-    <input type="hidden" name="process" value="email" />
-	<table width="100%"><tr><td>Subject:</td><td><input type="text" name="wpnewsletter_subject" id="wpnewsletter_subject" size="100"/></td></tr>
-	<tr><td>Message: <br/>Type <b>*name*</b> to set the username</td><td><textarea rows=10 cols=100 name="wpnewsletter_message" id="wpnewsletter_message"/></textarea></td></tr></table>
-	<p class="submit"><input type="submit" value="Send Newsletter"/></p></form>	
-</div>
-<div class="wrap">
-<h2>Users joined</h2>
-<?php
-	if ($users = $wpdb->get_results("SELECT * FROM $table_users ORDER BY `id` DESC")) {
-		$user_no=0;
-		$url = get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=newsletter/' .
-			basename(__FILE__);
-?>
-<table class="widefat">
-<thead>    
-<tr>
-<td scope="col">ID</td>
-<td scope="col">Date Join</td>
-<td scope="col">Opted-in</td>
-<td scope="col">IP</td>
-<td scope="col">Name</td>
-<td scope="col">E-mail</td>
-<td scope="col">Action</td>
-</tr>
-</thead>
-<tbody>
-<?php
-		$url = $url . '&amp;user_id=';
-		foreach ($users as $user) {
-			if ($user_no&1) {
-				echo "<tr class=\"alternate\">";
-			} else {
-				echo "<tr>";
-			}
-			$user_no=$user_no+1;
-			echo "<td>$user->id</td>";
-			echo "<td>" . $user->joindate . "</td>";
-			echo "<td>";
-			if($user->joinstatus == 1)
-				echo "Yes";
-			else if($user->joinstatus == 0)
-				echo "No";
-			else if ($user->joinstatus == 3)
-				echo "Removed";
-				
-			echo "</td>";
-			echo "<td>$user->ip</td>";
-			echo "<td>$user->name</td>";
-			echo "<td>$user->email</td>";
-			echo "<td><a href=\"$url$user->id\" onclick=\"if(confirm('Are you sure you want to delete user witd ID $user->id?')) return; else return false;\">Delete</a></td>";
-			echo "</tr>";
-		}
-?>
-</tbody>
-</table>
-<p><em>How to use</em>: insert this code in your pages: &lt;?php wpnewsletter_opt_in(); ?&gt;</p></div>
-<?php
-	}
+<?php 
 }
-
 ?>

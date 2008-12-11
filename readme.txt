@@ -10,7 +10,12 @@ This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in 
 
 == Description ==
 
-This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in email and name, and send emails to your opt-in list.
+This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in email and name, and send emails to your opt-in list. You can comment <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank" title="wordpress newsletter plugin">here</a>.
+
+<b>Update December 11, 2008</b>
+
+-Can filter data by Opted-in user, not opted-in user, and removed user
+-Paging system for opted-in data
 
 == Installation ==
 
