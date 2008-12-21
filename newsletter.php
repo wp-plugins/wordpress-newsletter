@@ -427,8 +427,7 @@ function wpnewsletter_settings() {
 			echo ("File Name Not Valid");
 			return;
 		}
-
-			$handle = fopen($filename, "rb");
+			$handle = fopen($File, "r");
 			$contents = fread($handle, filesize($filename));
 			$arr = split(":", $contents);
 			for($i=0;$i<count($arr)-1;$i++)
