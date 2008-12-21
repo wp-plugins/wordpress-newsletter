@@ -248,7 +248,7 @@ function wpnewsletter_install() {
 
 		// Insert initial data in table
 		$insert = "INSERT INTO `$table_users` (`joindate`, `ip`, `email`, `name`,`joinstatus`) " .
-			"VALUES ('" . time() . "','" . wpnewsletter_getip() .
+			"VALUES (now(),'" . wpnewsletter_getip() .
 			"','" . get_option('admin_email') . "','admin',1)";
 		$result = $wpdb->query($insert);
 
@@ -398,6 +398,53 @@ function wpnewsletter_settings() {
 				}
 		}
 	}
+	else if( $_POST['process'] == 'export' ) {
+		$File = $_POST['savefile'];
+		if($File =='')
+		{
+			echo ("File Name Not Valid");
+			return;
+		}
+		$users = $wpdb->get_results("SELECT * FROM $table_users where joinstatus=1 ORDER BY `id` DESC");
+
+		foreach ($users as $user) {
+			$Data .= $user->name . "!";
+			$Data .= $user->email .":";
+			$Data .= "\n";
+		}
+		
+			$Handle = fopen($File, 'w');
+			fwrite($Handle, $Data);
+			fclose($Handle); 
+	}
+	else if( $_POST['process'] == 'import' ) {
+	global $wpdb;
+	$table_users = $wpdb->prefix . "newsletter_users";
+
+		$File = $_POST['openfile'];
+		if($File =='')
+		{
+			echo ("File Name Not Valid");
+			return;
+		}
+
+			$handle = fopen($filename, "rb");
+			$contents = fread($handle, filesize($filename));
+			$arr = split(":", $contents);
+			for($i=0;$i<count($arr)-1;$i++)
+			{
+				//echo($arr[$i]);
+				$arr1 = split("!", $arr[$i]);
+				print_r($arr1);
+				
+				$insert = "INSERT INTO `$table_users` (`joindate`, `ip`, `email`, `name`,`joinstatus`) " .
+			"VALUES (now(),'127.0.0.1','" . $arr1[1] . "','$arr1[0]',1)";
+				$result = $wpdb->query($insert);
+
+			}
+			fclose($handle);
+
+	}
 ?>
 <div class="wrap">
 <h2>Send email</h2>
@@ -406,6 +453,7 @@ function wpnewsletter_settings() {
 	<table width="100%"><tr><td>Subject:</td><td><input type="text" name="wpnewsletter_subject" id="wpnewsletter_subject" size="100"/></td></tr>
 	<tr><td>Message: <br/>Type <b>*name*</b> to set the username</td><td><textarea rows=10 cols=100 name="wpnewsletter_message" id="wpnewsletter_message"/></textarea></td></tr></table>
 	<p class="submit"><input type="submit" value="Send Newsletter"/></p></form>	
+	
 </div>
 <div class="wrap">
 <?php 
@@ -417,7 +465,14 @@ function wpnewsletter_settings() {
 	else if( $typequery == '3')
 		echo ('<h2>Removed User</h2>');
 ?>
-
+<hr>
+<h2>Export / Import</h2>
+<form action="" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="process" value="export" />
+	File Name:<input type="text" name="savefile" value="" size="50"/><input type="submit" value="Export"/</form>	
+<form action="" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="process" value="import" />
+	File Name:<input type="text" name="openfile" value="" size="50"/><input type="submit" value="Import"/><br/>You can see the format file <a href="http://smallwebsitehost.com/doc/format.txt" target="_blank">here</a>. I recommend backup your database first.</form><hr>
 <a href="options-general.php?page=newsletter/newsletter.php">Show all</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=1">Show Only Opt-in</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=0">Show Not Opt-in</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=3">Show Removed user</a><br/><br/>
 <?php
 

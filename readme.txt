@@ -6,11 +6,11 @@ Requires at least: 2.6.0
 Tested up to: 2.6.5
 Stable tag: 1.0
 
-This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in email and name, and send emails to your opt-in list. You can comment <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank" title="wordpress newsletter plugin">here</a>.
+This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in email and name, and send emails to your opt-in list. It also have import and export email data ability. You can comment <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank" title="wordpress newsletter plugin">here</a>.
 
 == Description ==
 
-This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in email and name, and send emails to your opt-in list. You can comment <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank" title="wordpress newsletter plugin">here</a>.
+This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in email and name, and send emails to your opt-in list. It also have import and export email data ability. You can comment <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank" title="wordpress newsletter plugin">here</a>.
 
 <b>Update December 11, 2008</b>
 
