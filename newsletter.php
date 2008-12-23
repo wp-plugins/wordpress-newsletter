@@ -413,7 +413,7 @@ function wpnewsletter_settings() {
 			$Data .= "\n";
 		}
 		
-			$Handle = fopen($File, 'w');
+			$Handle = fopen("$File", 'w');
 			fwrite($Handle, $Data);
 			fclose($Handle); 
 	}
@@ -427,14 +427,14 @@ function wpnewsletter_settings() {
 			echo ("File Name Not Valid");
 			return;
 		}
-			$handle = fopen($File, "r");
-			$contents = fread($handle, filesize($filename));
+			$handle = fopen("$File", "r");
+			$contents = fread($handle, filesize($File));
 			$arr = split(":", $contents);
 			for($i=0;$i<count($arr)-1;$i++)
 			{
 				//echo($arr[$i]);
 				$arr1 = split("!", $arr[$i]);
-				print_r($arr1);
+				//print_r($arr1);
 				
 				$insert = "INSERT INTO `$table_users` (`joindate`, `ip`, `email`, `name`,`joinstatus`) " .
 			"VALUES (now(),'127.0.0.1','" . $arr1[1] . "','$arr1[0]',1)";
