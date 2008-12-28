@@ -502,7 +502,7 @@ function wpnewsletter_settings() {
 		checkValid($offset);
 		
 		if($offset =='')
-			$offset = 1;
+			$offset = 0;
 			
 		$limit = 50;
 		
@@ -526,7 +526,7 @@ function wpnewsletter_settings() {
 				echo "[$i]";
 			}
 		}
-		
+
 		for($i=$offset;$i<$offset+$limit;$i++)
 		{
 			$user = $users[$i];
