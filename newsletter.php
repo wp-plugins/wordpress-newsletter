@@ -44,15 +44,54 @@ function wpnewsletter_add_menu() {
 }
 
 function wpnewsletter_show_optin_form() {	
-	$out = '<form action="" metdod="post">';
-	$out .= '<table width="100%"  bgcolor="#EBF3FE">';
-	$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
-	$out .= '<tr><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
-	$out .= '<tr><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
-	$out .= '<tr><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr>';
-	$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank">Newsletter plugin</a></small></td></tr>';
-	$out .='</table></form>';
-	echo $out;
+		$out = '<form action="" metdod="post">';
+		$out .= '<table width="100%"  bgcolor="#EBF3FE">';
+		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
+		$out .= '<tr><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
+		$out .= '<tr><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
+		$out .= '<tr><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr>';
+		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank">Newsletter plugin</a></small></td></tr>';
+		$out .='</table></form>';
+		echo $out;
+
+}
+
+function wpnewsletter_show_optin_div() {	
+	$blogname = get_option('blogname');
+	if($_COOKIE[$blogname+"pop"]=='')
+	{
+		setcookie($blogname+"pop", "1");
+	?>
+	<div id=floating style="position:absolute;visibility:none;z-index:20000;float:left;top:150px;left:200px;">
+		<table cellpadding=0 cellspacing=3 bgcolor="#ffff00" width="400px">
+			<script>
+			function hide()
+			{
+				document.getElementById('floating').style.display = 'none';
+			}
+			</script>
+			<tr style="BACKGROUND: white" align="center">
+				<td colspan=2><b>Subscribe my newsletter</b>&nbsp;<a href="javascript:hide();">[X]</a></td>
+			</tr>
+			<?php
+				$out = '<form action="" metdod="post">';
+				if(stripslashes(get_option('wpnewsletter_form_header')) != '')
+					$out .= '<tr><td colspan=2  align="center">'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
+				$out .= '<tr  align="center"><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
+				$out .= '<tr  align="center"><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
+				$out .= '<tr  align="center"><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr  align="center">';
+				$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank">Newsletter plugin</a></small></td></tr>';
+				$out .='</form>';
+				echo $out;
+			?>
+			<tr>
+				<td align="center"  bgcolor="#EBF3FE" colspan="2"><a href="javascript:hide();">Close [X]</a><br/>
+				</td>
+			</tr>
+			</table>
+	</div>
+	<?php }
+	ob_end_flush();
 }
 
 function wpnewsletter_getip() {
@@ -104,6 +143,13 @@ function wpnewsletter_opt_in() {
 		$email = stripslashes($_GET['wpnewsletter_email']);
 		$email = checkValid($email);
 
+		//replace name		
+		$find = array('/ä/','/ö/','/ü/','/ß/','/Ä/','/Ö/','/Ü/','/ /','/[:;]/');
+
+		$replace = array('ae','oe','ue','ss','Ae','Oe','Ue','_','');
+
+		$name = preg_replace ($find , $replace, strtolower($name));
+
 		if($name == "" || $email == "")
 			return;
 		
@@ -150,6 +196,11 @@ function wpnewsletter_opt_in() {
 							//echo($query);
 						
 						echo stripslashes(get_option('wpnewsletter_msg_sent'));
+						
+						//ob_start();					
+						//$_COOKIE["newslettername"] = $name;
+
+						//ob_end_flush();
 					} 
 					else {
 						echo stripslashes(get_option('wpnewsletter_msg_fail'));
@@ -265,7 +316,7 @@ www.smallwebsitehost.com");
 		
 		add_option('wpnewsletter_msg_dup', "<p>E-mail address already subscribed.</p>");
 		add_option('wpnewsletter_msg_fail', "<p>Failed sending to e-mail address.</p>");
-		add_option('wpnewsletter_msg_sent', "<p>Thanks for subscribing. Please check your email to verify.</p>");
+		add_option('wpnewsletter_msg_sent', "<p>Thanks for subscribing. Please check your email to verify. Don't forgot to check your spam folder.</p>");
 
 		add_option('wpnewsletter_form_header', "Opt-in form header");
 		add_option('wpnewsletter_form_footer', "Opt-in form footer");

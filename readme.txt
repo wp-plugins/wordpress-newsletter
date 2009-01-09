@@ -22,4 +22,5 @@ This plugin is a simple newsletter plugin. It can show opt-in form, save opt-in 
 1. Upload the plugin files to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Update setting.php with your database settings. You can find the settings in 'wp-config.php' in your www directory.
-4. Place `<?php wpnewsletter_opt_in(); ?>` in your templates
+4. Place `<?php wpnewsletter_opt_in(); ?>` in your templates. 
+5. If you want to add show pop up opt-in form place `<?php wpnewsletter_show_optin_div(); ?>` in your templates. Put <?php ob_start(); ?> on the first line of your header.php theme file.
