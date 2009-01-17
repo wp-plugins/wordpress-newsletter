@@ -212,7 +212,7 @@ function wpnewsletter_opt_in() {
 
 function wpnewsletter_optin_confirm() {
 require_once('setting.php');
-	global $wpdb;
+	$wpdb = "wp_";
 
 	mysql_connect($dbhost, $dbuser, $dbpass) or die("koneksi gagal");
 	mysql_select_db($dbname);
@@ -256,14 +256,64 @@ require_once('setting.php');
 
 		if ($result) {
 			$row = mysql_fetch_assoc($result);
-
+		
 			if($row['id'])
 			{
-
 				$update = "UPDATE " . $dbprefix . "newsletter_users SET `joinstatus` = '1' WHERE `id` = ". $row['id'];
 				$result = mysql_query($update );
 
 				echo("Thank you. You are subscribed now!");
+
+				$table_users = $wpdb . "newsletter_users";
+				$result = mysql_query("SELECT * FROM $table_users where `id` = ". $row['id']);				
+				$row = mysql_fetch_assoc($result);
+				$email_to = $row['email'];
+				
+				$result = mysql_query("select * from wp_options where option_name ='wpnewsletter_email_from'");
+				$row = mysql_fetch_assoc($result);
+				$email_from = $row['option_value'];
+
+				//send email to subscriber
+				$headers = "MIME-Version: 1.0\n";
+				$result = mysql_query("select * from wp_options where option_name ='blogname'");
+				$row = mysql_fetch_assoc($result);
+				$blogname = $row['option_value'];
+				$result = mysql_query("select * from wp_options where option_name ='blog_charset'");
+				$row = mysql_fetch_assoc($result);
+				
+				$headers .= "From: $blogname <$email_from>\n";
+				$headers .= "Content-Type: text/plain; charset=\"" . $row['option_value'] . "\"\n";
+
+				$result = mysql_query("select * from wp_options where option_name ='blogname'");
+				$row = mysql_fetch_assoc($result);
+				$blogname = $row['option_value'];
+
+				$result = mysql_query("select * from wp_options where option_name ='wpnewsletter_email_subject_subscriber'");
+				$row = mysql_fetch_assoc($result);
+				$subject = stripslashes($row['option_value']);
+
+				$result = mysql_query("select * from wp_options where option_name ='wpnewsletter_email_message_subscriber'");
+				$row = mysql_fetch_assoc($result);
+				$message = stripslashes($row['option_value']);
+
+				$message = str_replace("*name*", $user->name, $message);
+				$subject = str_replace("*name*", $user->name, $subject);
+
+				$result = mysql_query("select * from wp_options where option_name ='siteurl'");
+				$row = mysql_fetch_assoc($result);
+				$url = $row['option_value'] .'/wp-content/plugins/newsletter/newsletter.php?type=remove&';
+							
+				$url .= "kei=".md5($user->email.$user->name);
+
+				$message .= "\n\nYou can unsubscribe at ". $url;
+				if (mail($email_to,$subject,$message,$headers)) {
+					//echo "Emailed to " . $user->email."<br/>";		
+				}
+				else
+				{
+					//echo("failed email " + $user->email);
+				}
+
 			}
 			else
 			{
@@ -314,6 +364,9 @@ You can verify your email at *link*.\n\n
 
 www.smallwebsitehost.com");
 		
+		add_option('wpnewsletter_email_subject_subscriber', "$blogname - Your subscription");
+		add_option('wpnewsletter_email_message_subscriber', "Thanks you. Now you are subsribed at $blogname.\n");
+
 		add_option('wpnewsletter_msg_dup', "<p>E-mail address already subscribed.</p>");
 		add_option('wpnewsletter_msg_fail', "<p>Failed sending to e-mail address.</p>");
 		add_option('wpnewsletter_msg_sent', "<p>Thanks for subscribing. Please check your email to verify. Don't forgot to check your spam folder.</p>");
@@ -364,6 +417,8 @@ function wpnewsletter_settings() {
 	$email_from = stripslashes(get_option('wpnewsletter_email_from'));
 	$email_subject = stripslashes(get_option('wpnewsletter_email_subject'));
 	$email_message = stripslashes(get_option('wpnewsletter_email_message'));
+	$email_subject_subscriber = stripslashes(get_option('wpnewsletter_email_subject_subscriber'));
+	$email_message_subscriber = stripslashes(get_option('wpnewsletter_email_message_subscriber'));
 	$msg_dup = stripslashes(get_option('wpnewsletter_msg_dup'));
 	$msg_fail = stripslashes(get_option('wpnewsletter_msg_fail'));
 	$msg_sent = stripslashes(get_option('wpnewsletter_msg_sent'));
@@ -381,6 +436,10 @@ function wpnewsletter_settings() {
 		$email_from = stripslashes($_POST['wpnewsletter_email_from']);
 		$email_subject = stripslashes($_POST['wpnewsletter_email_subject']);
 		$email_message = stripslashes($_POST['wpnewsletter_email_message']);
+		
+		$email_subject_subscriber = stripslashes($_POST['wpnewsletter_email_subject_subscriber']);
+		$email_message_subscriber = stripslashes($_POST['wpnewsletter_email_message_subscriber']);
+
 		$msg_dup = stripslashes($_POST['wpnewsletter_msg_dup']);
 		$msg_fail = stripslashes($_POST['wpnewsletter_msg_fail']);
 		$msg_sent = stripslashes($_POST['wpnewsletter_msg_sent']);
@@ -395,6 +454,9 @@ function wpnewsletter_settings() {
 		update_option('wpnewsletter_email_from', $email_from );
 		update_option('wpnewsletter_email_subject', $email_subject);
 		update_option('wpnewsletter_email_message', $email_message);
+
+		update_option('wpnewsletter_email_subject_subscriber', $email_subject_subscriber);
+		update_option('wpnewsletter_email_message_subscriber', $email_message_subscriber);
 
 		update_option('wpnewsletter_msg_dup', $msg_dup);
 		update_option('wpnewsletter_msg_fail', $msg_fail);
@@ -646,17 +708,30 @@ function wpnewsletter_settings() {
         </td>
       </tr>
       <tr valign="top"> 
-        <td scope="row">Autoresponder message to subscriber, subject:</td>
+        <td scope="row">Autoresponder email subject to prospect subscriber:</td>
         <td> 
           <input type="text" name="wpnewsletter_email_subject" id="wpnewsletter_email_subject" value="<?php echo $email_subject; ?>" size="40" />
         </td>
       </tr>
       <tr valign="top"> 
-        <td scope="row">Autoresponder message to subscriber, content:</td>
+        <td scope="row">Autoresponder email content to prospect subscriber:</td>
         <td> 
             <textarea name="wpnewsletter_email_message" id="wpnewsletter_email_message" rows="4" cols="40"><?php echo $email_message; ?></textarea>
         </td>
       </tr>
+      <tr valign="top"> 
+        <td scope="row">Autoresponder email subject to subscriber:</td>
+        <td> 
+          <input type="text" name="wpnewsletter_email_subject_subscriber" id="wpnewsletter_email_subject_subscriber" value="<?php echo $email_subject_subscriber; ?>" size="40" />
+        </td>
+      </tr>
+      <tr valign="top"> 
+        <td scope="row">Autoresponder email content to subscriber:</td>
+        <td> 
+            <textarea name="wpnewsletter_email_message_subscriber" id="wpnewsletter_email_message_subscriber" rows="4" cols="40"><?php echo $email_message_subscriber; ?></textarea>
+        </td>
+      </tr>
+
       <tr valign="top"> 
         <td scope="row" colspan=2>    </fieldset> <fieldset class="options"> <legend>Messages</legend> </td>
       </tr>
