@@ -26,7 +26,7 @@ Autdor URI: http://www.smallwebsitehost.com/
 
 $wpnewsletter_db_version = "1.0";
 
-
+session_start();
 
 if(!empty($_GET['kei']))
 {
@@ -44,19 +44,29 @@ function wpnewsletter_add_menu() {
 }
 
 function wpnewsletter_show_optin_form() {	
+	if (empty($_POST['wpnewsletter_email'])) {
+	
+		wpnewsletter_opt_in();
+	}
 		$out = '<form action="" metdod="post">';
 		$out .= '<table width="100%"  bgcolor="#EBF3FE">';
 		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
 		$out .= '<tr><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
 		$out .= '<tr><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
+		$out .= '<tr><td>Enter security code:<img src="wp-content/plugins/newsletter/captcha.php?width=50&height=25&characters=5" /></td><td><input type="text" name="security_code" size="5"></td></tr>';			
 		$out .= '<tr><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr>';
-		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank">Newsletter plugin</a></small></td></tr>';
+		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com" target="_blank">Newsletter plugin</a></small></td></tr>';
 		$out .='</table></form>';
 		echo $out;
 
 }
 
 function wpnewsletter_show_optin_div() {	
+	if (empty($_POST['wpnewsletter_email'])) {
+	
+		wpnewsletter_opt_in();
+	}
+	
 	$blogname = get_option('blogname');
 	if($_COOKIE[$blogname+"pop"]=='')
 	{
@@ -79,8 +89,9 @@ function wpnewsletter_show_optin_div() {
 					$out .= '<tr><td colspan=2  align="center">'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
 				$out .= '<tr  align="center"><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
 				$out .= '<tr  align="center"><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
+				$out .= '<tr  align="center"><td>Enter security code:<img src="wp-content/plugins/newsletter/captcha.php?width=50&height=25&characters=5" /></td><td><input type="text" name="security_code" size="5"></td></tr>';			
 				$out .= '<tr  align="center"><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr  align="center">';
-				$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com/wordpress-newsletter-plugin/wordpress/" target="_blank">Newsletter plugin</a></small></td></tr>';
+				$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com" target="_blank">Newsletter plugin</a></small></td></tr>';
 				$out .='</form>';
 				echo $out;
 			?>
@@ -126,6 +137,7 @@ function wpnewsletter_opt_in() {
 	$table_users = $wpdb->prefix . "newsletter_users";
 
 	//trim the email
+
 	if (empty($_GET['wpnewsletter_email'])) {
 
 		if (!empty($_GET['kei'])) {
@@ -159,7 +171,10 @@ function wpnewsletter_opt_in() {
 				wpnewsletter_show_optin_form();
 		}
 		else {
+			if( $_SESSION['security_code'] == $_GET['security_code'] && !empty($_SESSION['security_code'] ) ) {
+
 				$email_from = stripslashes(get_option('wpnewsletter_email_from'));
+
 				$subject = stripslashes(get_option('wpnewsletter_email_subject'));
 				
 				$message = stripslashes(get_option('wpnewsletter_email_message'));
@@ -173,17 +188,16 @@ function wpnewsletter_opt_in() {
 
 				$message = str_replace('*link*', $url, $message);
 					
-				$headers = "MIME-Version: 1.0\n";
 				$blogname = get_option('blogname');
-				$headers .= "From: $blogname <$email_from>\n";
-				$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\n";
-		
+		$header = "From: $email_from\n"
+			. "Content-Type: text/plain; charset=\"" . get_option('blog_charset') . "\"\n";
 				$selectqry = "SELECT * FROM " . $table_users . " WHERE `email` = '" . $email ."'";
 				if ($wpdb->query($selectqry)) {
 					echo stripslashes(get_option('wpnewsletter_msg_dup'));
 				}
 				else {
-					if (mail($email,$subject,$message,$headers)) {
+				
+					if (@wp_mail($email,$subject,$message, $header)) {
 							
 							$query = "INSERT INTO " . $table_users . " 
 								(joindate, ip, email, joinstatus, name) 
@@ -206,6 +220,12 @@ function wpnewsletter_opt_in() {
 						echo stripslashes(get_option('wpnewsletter_msg_fail'));
 					}
 				}
+					unset($_SESSION['security_code']);
+				return 0;
+			} else {
+				// Insert your code for showing an error message here
+				echo 'Sorry, you have provided an invalid security code. Please try again.';
+		   }
 		}
 	}
 }
@@ -274,15 +294,14 @@ require_once('setting.php');
 				$email_from = $row['option_value'];
 
 				//send email to subscriber
-				$headers = "MIME-Version: 1.0\n";
 				$result = mysql_query("select * from wp_options where option_name ='blogname'");
 				$row = mysql_fetch_assoc($result);
 				$blogname = $row['option_value'];
 				$result = mysql_query("select * from wp_options where option_name ='blog_charset'");
 				$row = mysql_fetch_assoc($result);
 				
+				$headers = "MIME-Version: 1.0\n";
 				$headers .= "From: $blogname <$email_from>\n";
-				$headers .= "Content-Type: text/plain; charset=\"" . $row['option_value'] . "\"\n";
 
 				$result = mysql_query("select * from wp_options where option_name ='blogname'");
 				$row = mysql_fetch_assoc($result);
@@ -430,7 +449,6 @@ function wpnewsletter_settings() {
 	$form_send = stripslashes(get_option('wpnewsletter_form_send'));
 
 	// Update options if user posted new information
-
 	if( $_POST['process'] == 'edit' ) {
 		// Read from form
 		$email_from = stripslashes($_POST['wpnewsletter_email_from']);
@@ -474,7 +492,6 @@ function wpnewsletter_settings() {
 		echo '</strong></p></div>';
 	}
 	else if( $_POST['process'] == 'email' ) {
-	
 		$email_from = stripslashes(get_option('wpnewsletter_email_from'));
 		
 		$subject = stripslashes($_POST['wpnewsletter_subject']);
@@ -482,7 +499,7 @@ function wpnewsletter_settings() {
 		
 		$headers = "MIME-Version: 1.0\n";
 		$blogname = get_option('blogname');
-		$headers .= "From: $blogname <$email_from>\n";
+		$headers .= "From: $email_from\n";
 		$headers .= "Content-Type: text/plain; charset=\"" . get_settings('blog_charset') . "\"\n";
 
 		$users = $wpdb->get_results("SELECT * FROM $table_users where joinstatus=1 ORDER BY `id` DESC");
