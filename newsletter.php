@@ -44,10 +44,12 @@ function wpnewsletter_add_menu() {
 }
 
 function wpnewsletter_show_optin_form() {	
-	if (empty($_POST['wpnewsletter_email'])) {
+
+	//if (empty($_POST['wpnewsletter_email'])) {
+	//
+	//	wpnewsletter_opt_in();
+	//}
 	
-		wpnewsletter_opt_in();
-	}
 		$out = '<form action="" metdod="post">';
 		$out .= '<table width="100%"  bgcolor="#EBF3FE">';
 		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
@@ -62,10 +64,10 @@ function wpnewsletter_show_optin_form() {
 }
 
 function wpnewsletter_show_optin_div() {	
-	if (empty($_POST['wpnewsletter_email'])) {
-	
-		wpnewsletter_opt_in();
-	}
+	//if (empty($_POST['wpnewsletter_email'])) {
+	//
+	//	wpnewsletter_opt_in();
+	//}
 	
 	$blogname = get_option('blogname');
 	if($_COOKIE[$blogname+"pop"]=='')
@@ -147,6 +149,8 @@ function wpnewsletter_opt_in() {
 			$_POST['wpnewsletter_email'] = trim($_POST['wpnewsletter_email']);
 			wpnewsletter_show_optin_form();
 		}
+		
+		
 	} 
 	else {
 		$name = stripslashes($_GET['wpnewsletter_name']);
