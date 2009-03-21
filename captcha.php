@@ -60,7 +60,7 @@ class CaptchaSecurityImages {
 		$textbox = imagettfbbox($font_size, 0, './monofont.ttf', $code) or die('Error in imagettfbbox function');
 		$x = ($width - $textbox[4])/2;
 		$y = ($height - $textbox[5])/2;
-		imagettftext($image, $font_size, 0, $x, $y, $text_color, $this->font , $code) or die('Error in imagettftext function');
+		imagettftext($image, $font_size, 0, $x, $y, $text_color, './monofont.ttf' , $code) or die('Error in imagettftext function');
 		/* output captcha image to browser */
 		header('Content-Type: image/jpeg');
 		imagejpeg($image);
