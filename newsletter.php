@@ -33,6 +33,10 @@ if(!empty($_GET['kei']))
 
 	wpnewsletter_opt_in();
 }
+else if($_GET['security_code'])
+{
+	wpnewsletter_opt_in();
+}
 else
 {
 	register_activation_hook(__FILE__, 'wpnewsletter_install');
@@ -55,7 +59,7 @@ function wpnewsletter_show_optin_form() {
 		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
 		$out .= '<tr><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
 		$out .= '<tr><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
-		$out .= '<tr><td>Enter security code:<img src="wp-content/plugins/newsletter/captcha.php?width=50&height=25&characters=5" /></td><td><input type="text" name="security_code" size="5"></td></tr>';			
+		$out .= '<tr><td>Enter security code:<img src='.get_bloginfo('wpurl').'/wp-content/plugins/wordpress-newsletter/captcha.php?width=50&height=25&characters=5" /></td><td><input type="text" name="security_code" size="5"></td></tr>';			
 		$out .= '<tr><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr>';
 		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com" target="_blank">Newsletter plugin</a></small></td></tr>';
 		$out .='</table></form>';
@@ -91,7 +95,7 @@ function wpnewsletter_show_optin_div() {
 					$out .= '<tr><td colspan=2  align="center">'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
 				$out .= '<tr  align="center"><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
 				$out .= '<tr  align="center"><td>Email:</td><td><input type="text" name="wpnewsletter_email" id="wpnewsletter_email"/></td></tr>';
-				$out .= '<tr  align="center"><td>Enter security code:<img src="wp-content/plugins/newsletter/captcha.php?width=50&height=25&characters=5" /></td><td><input type="text" name="security_code" size="5"></td></tr>';			
+				$out .= '<tr  align="center"><td>Enter security code:<img src="'.get_bloginfo('wpurl').'/wp-content/plugins/wordpress-newsletter/captcha.php?width=50&height=25&characters=5" /></td><td><input type="text" name="security_code" size="5"></td></tr>';			
 				$out .= '<tr  align="center"><td colspan=2 align=center><input type="submit" value="Subscribe"/></td></tr  align="center">';
 				$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_footer')) .'<br/><small>Powered by <a href="http://smallwebsitehost.com" target="_blank">Newsletter plugin</a></small></td></tr>';
 				$out .='</form>';
@@ -139,7 +143,6 @@ function wpnewsletter_opt_in() {
 	$table_users = $wpdb->prefix . "newsletter_users";
 
 	//trim the email
-
 	if (empty($_GET['wpnewsletter_email'])) {
 
 		if (!empty($_GET['kei'])) {
@@ -153,6 +156,7 @@ function wpnewsletter_opt_in() {
 		
 	} 
 	else {
+	
 		$name = stripslashes($_GET['wpnewsletter_name']);
 		$name  = checkValid($name );
 
@@ -165,6 +169,7 @@ function wpnewsletter_opt_in() {
 		$replace = array('ae','oe','ue','ss','Ae','Oe','Ue','_','');
 
 		$name = preg_replace ($find , $replace, strtolower($name));
+
 
 		if($name == "" || $email == "")
 			return;
@@ -200,9 +205,9 @@ function wpnewsletter_opt_in() {
 					echo stripslashes(get_option('wpnewsletter_msg_dup'));
 				}
 				else {
-				
-					if (@wp_mail($email,$subject,$message, $header)) {
-							
+					if (mail($email,$subject,$message, $header)) {
+											echo("email");
+
 							$query = "INSERT INTO " . $table_users . " 
 								(joindate, ip, email, joinstatus, name) 
 								VALUES (
@@ -221,6 +226,7 @@ function wpnewsletter_opt_in() {
 						//ob_end_flush();
 					} 
 					else {
+						echo("emailno");
 						echo stripslashes(get_option('wpnewsletter_msg_fail'));
 					}
 				}
