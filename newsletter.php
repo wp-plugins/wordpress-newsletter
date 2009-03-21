@@ -28,20 +28,9 @@ $wpnewsletter_db_version = "1.0";
 
 session_start();
 
-if(!empty($_GET['kei']))
-{
-
-	wpnewsletter_opt_in();
-}
-else if($_GET['security_code'])
-{
-	wpnewsletter_opt_in();
-}
-else
-{
 	register_activation_hook(__FILE__, 'wpnewsletter_install');
 	add_action('admin_menu', 'wpnewsletter_add_menu');
-}
+
 
 function wpnewsletter_add_menu() {
 	add_options_page('Newsletter', 'Newsletter', 6, __FILE__, 'wpnewsletter_settings' );
@@ -49,12 +38,12 @@ function wpnewsletter_add_menu() {
 
 function wpnewsletter_show_optin_form() {	
 
-	//if (empty($_POST['wpnewsletter_email'])) {
-	//
-	//	wpnewsletter_opt_in();
-	//}
+	if (!empty($_POST['wpnewsletter_email'])) {
 	
-		$out = '<form action="" metdod="post">';
+		wpnewsletter_opt_in();
+	}
+	
+		$out = '<form action="" method="post">';
 		$out .= '<table width="100%"  bgcolor="#EBF3FE">';
 		$out .= '<tr><td colspan=2>'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
 		$out .= '<tr><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
@@ -68,7 +57,7 @@ function wpnewsletter_show_optin_form() {
 }
 
 function wpnewsletter_show_optin_div() {	
-	//if (empty($_POST['wpnewsletter_email'])) {
+	//if (!empty($_POST['wpnewsletter_email'])) {
 	//
 	//	wpnewsletter_opt_in();
 	//}
@@ -90,7 +79,7 @@ function wpnewsletter_show_optin_div() {
 				<td colspan=2><b>Subscribe my newsletter</b>&nbsp;<a href="javascript:hide();">[X]</a></td>
 			</tr>
 			<?php
-				$out = '<form action="" metdod="post">';
+				$out = '<form action="" method="post">';
 				if(stripslashes(get_option('wpnewsletter_form_header')) != '')
 					$out .= '<tr><td colspan=2  align="center">'. stripslashes(get_option('wpnewsletter_form_header')) .'</td></tr>';
 				$out .= '<tr  align="center"><td>Name:</td><td><input type="text" name="wpnewsletter_name" id="wpnewsletter_name"/></td></tr>';
@@ -143,9 +132,9 @@ function wpnewsletter_opt_in() {
 	$table_users = $wpdb->prefix . "newsletter_users";
 
 	//trim the email
-	if (empty($_GET['wpnewsletter_email'])) {
+	if (empty($_POST['wpnewsletter_email'])) {
 
-		if (!empty($_GET['kei'])) {
+		if (!empty($_POST['kei'])) {
 			wpnewsletter_optin_confirm();
 		}
 		else {
@@ -157,10 +146,10 @@ function wpnewsletter_opt_in() {
 	} 
 	else {
 	
-		$name = stripslashes($_GET['wpnewsletter_name']);
+		$name = stripslashes($_POST['wpnewsletter_name']);
 		$name  = checkValid($name );
 
-		$email = stripslashes($_GET['wpnewsletter_email']);
+		$email = stripslashes($_POST['wpnewsletter_email']);
 		$email = checkValid($email);
 
 		//replace name		
@@ -180,7 +169,7 @@ function wpnewsletter_opt_in() {
 				wpnewsletter_show_optin_form();
 		}
 		else {
-			if( $_SESSION['security_code'] == $_GET['security_code'] && !empty($_SESSION['security_code'] ) ) {
+			if( $_SESSION['security_code'] == $_POST['security_code'] && !empty($_SESSION['security_code'] ) ) {
 
 				$email_from = stripslashes(get_option('wpnewsletter_email_from'));
 
@@ -206,7 +195,6 @@ function wpnewsletter_opt_in() {
 				}
 				else {
 					if (mail($email,$subject,$message, $header)) {
-											echo("email");
 
 							$query = "INSERT INTO " . $table_users . " 
 								(joindate, ip, email, joinstatus, name) 
@@ -226,7 +214,6 @@ function wpnewsletter_opt_in() {
 						//ob_end_flush();
 					} 
 					else {
-						echo("emailno");
 						echo stripslashes(get_option('wpnewsletter_msg_fail'));
 					}
 				}
@@ -247,7 +234,7 @@ require_once('setting.php');
 	mysql_connect($dbhost, $dbuser, $dbpass) or die("koneksi gagal");
 	mysql_select_db($dbname);
 	
-	$wpnewsletter_ip = $_GET['kei'];
+	$wpnewsletter_ip = $_POST['kei'];
 
 	$wpnewsletter_ip = checkValid($wpnewsletter_ip );
 
