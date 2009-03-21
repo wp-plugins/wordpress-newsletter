@@ -28,10 +28,14 @@ $wpnewsletter_db_version = "1.0";
 
 session_start();
 
+if (empty($_GET['kei'])){
 	register_activation_hook(__FILE__, 'wpnewsletter_install');
 	add_action('admin_menu', 'wpnewsletter_add_menu');
-
-
+}
+else if(!empty($_GET['kei']))
+{
+wpnewsletter_opt_in();
+}
 function wpnewsletter_add_menu() {
 	add_options_page('Newsletter', 'Newsletter', 6, __FILE__, 'wpnewsletter_settings' );
 }
@@ -134,7 +138,7 @@ function wpnewsletter_opt_in() {
 	//trim the email
 	if (empty($_POST['wpnewsletter_email'])) {
 
-		if (!empty($_POST['kei'])) {
+		if (!empty($_GET['kei'])) {
 			wpnewsletter_optin_confirm();
 		}
 		else {
@@ -178,7 +182,7 @@ function wpnewsletter_opt_in() {
 				$message = stripslashes(get_option('wpnewsletter_email_message'));
 				
 				//create activation link
-				$url = get_bloginfo('wpurl') .'/wp-content/plugins/newsletter/newsletter.php?';
+				$url = get_bloginfo('wpurl') .'/wp-content/plugins/wordpress-newsletter/newsletter.php?';
 			
 				$wpnewsletter_ip = wpnewsletter_getip();
 				
@@ -317,7 +321,7 @@ require_once('setting.php');
 
 				$result = mysql_query("select * from wp_options where option_name ='siteurl'");
 				$row = mysql_fetch_assoc($result);
-				$url = $row['option_value'] .'/wp-content/plugins/newsletter/newsletter.php?type=remove&';
+				$url = $row['option_value'] .'/wp-content/plugins/wordpress-newsletter/newsletter.php?type=remove&';
 							
 				$url .= "kei=".md5($user->email.$user->name);
 
@@ -508,7 +512,7 @@ function wpnewsletter_settings() {
 				$message = str_replace("*name*", $user->name, $message);
 				$subject = str_replace("*name*", $user->name, $subject);
 
-				$url = get_bloginfo('wpurl') .'/wp-content/plugins/newsletter/newsletter.php?type=remove&';
+				$url = get_bloginfo('wpurl') .'/wp-content/plugins/wordpress-newsletter/newsletter.php?type=remove&';
 			
 				$wpnewsletter_ip = wpnewsletter_getip();
 				
