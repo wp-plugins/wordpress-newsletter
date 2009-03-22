@@ -238,7 +238,7 @@ require_once('setting.php');
 	mysql_connect($dbhost, $dbuser, $dbpass) or die("koneksi gagal");
 	mysql_select_db($dbname);
 	
-	$wpnewsletter_ip = $_POST['kei'];
+	$wpnewsletter_ip = $_GET['kei'];
 
 	$wpnewsletter_ip = checkValid($wpnewsletter_ip );
 
