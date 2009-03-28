@@ -37,7 +37,7 @@ else if(!empty($_GET['kei']))
 wpnewsletter_opt_in();
 }
 function wpnewsletter_add_menu() {
-	add_options_page('Newsletter', 'Newsletter', 6, __FILE__, 'wpnewsletter_settings' );
+	add_options_page('Newsletter', 'Newsletter', 6, __FILE__, array(&$this, 'wpnewsletter_settings') );
 }
 
 function wpnewsletter_show_optin_form() {	
