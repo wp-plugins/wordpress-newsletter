@@ -1,7 +1,7 @@
 === Simple Newsletter Plugin ===
 Contributors: Yulianto (Ian)
 Donate link: http://smallwebsitehost.com/
-Tags: Newsletter, opt-in, email marketing, newsletter plugin, admin, plugin
+Tags: Newsletter, opt-in, email marketing, newsletter plugin, admin, plugin, email, mail, wordpress
 Requires at least: 2.6.0
 Tested up to: 2.6.5
 Stable tag: 1.0
