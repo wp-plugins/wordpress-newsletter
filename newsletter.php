@@ -34,10 +34,10 @@ if (empty($_GET['kei'])){
 }
 else if(!empty($_GET['kei']))
 {
-wpnewsletter_opt_in();
+	wpnewsletter_opt_in();
 }
 function wpnewsletter_add_menu() {
-	add_options_page('Newsletter', 'Newsletter', 6, __FILE__, array(&$this, 'wpnewsletter_settings') );
+	add_options_page('Newsletter', 'Newsletter', 6, __FILE__, 'wpnewsletter_settings' );
 }
 
 function wpnewsletter_show_optin_form() {	
@@ -415,7 +415,9 @@ function checkValid($str)
 }
 
 function wpnewsletter_settings() {
+
 	global $wpdb;
+
 	$table_users = $wpdb->prefix . "newsletter_users";
 
 	// if $_GET['user_id'] set tden delete user from list
