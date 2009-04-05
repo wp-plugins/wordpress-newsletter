@@ -508,6 +508,13 @@ function wpnewsletter_settings() {
 		$users = $wpdb->get_results("SELECT * FROM $table_users where joinstatus=1 ORDER BY `id` DESC");
 
 		foreach ($users as $user) {
+$headers  = 'MIME-Version: 1.0' . "\r\n";
+$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+
+// Additional headers
+$headers .= 'To: '. $user->email . "\r\n";
+$headers .= 'From: '. $email_from . "\r\n";
+$to  = $user->email;
 				$subject = stripslashes($_POST['wpnewsletter_subject']);
 				$message = stripslashes($_POST['wpnewsletter_message']);
 
@@ -522,7 +529,7 @@ function wpnewsletter_settings() {
 
 				$message .= "\n\nYou can unsubscribe at ". $url;
 				
-				if (@wp_mail($user->email,$subject,$message,$headers)) {
+				if (mail($user->email,$subject,$message,$headers)) {
 					echo "Emailed to " . $user->email."<br/>";		
 				}
 				else
