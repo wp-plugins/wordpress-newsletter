@@ -612,7 +612,7 @@ $to  = $user->email;
 <form action="" method="post" enctype="multipart/form-data">
     <input type="hidden" name="process" value="import" />
 	File Name:<input type="text" name="openfile" value="" size="50"/><input type="submit" value="Import"/><br/>You can see the format file <a href="http://smallwebsitehost.com/doc/format.txt" target="_blank">here</a>. I recommend backup your database first.</form><hr>
-<a href="options-general.php?page=newsletter/newsletter.php">Show all</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=1">Show Only Opt-in</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=0">Show Not Opt-in</a> - <a href="options-general.php?page=newsletter/newsletter.php&type=3">Show Removed user</a><br/><br/>
+<a href="options-general.php?page=wordpress-newsletter/newsletter.php">Show all</a> - <a href="options-general.php?page=wordpress-newsletter/newsletter.php&type=1">Show Only Opt-in</a> - <a href="options-general.php?page=wordpress-newsletter/newsletter.php&type=0">Show Not Opt-in</a> - <a href="options-general.php?page=wordpress-newsletter/newsletter.php&type=3">Show Removed user</a><br/><br/>
 <?php
 
 	if($typequery !='')
@@ -620,7 +620,7 @@ $to  = $user->email;
 		
 	if ($users = $wpdb->get_results("SELECT * FROM $table_users $typequery ORDER BY `id` DESC")) {
 		$user_no=0;
-		$url = get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=newsletter/' .
+		$url = get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=wordpress-newsletter/' .
 			basename(__FILE__);
 ?>
 <table class="widefat">
@@ -660,7 +660,7 @@ $to  = $user->email;
 
 			if($offset!=$newpage)
 			{
-				echo "[<a href='options-general.php?page=newsletter/newsletter.php&type=".$_GET['type']. "&offset=".$newpage."'>$i</a>]";
+				echo "[<a href='options-general.php?page=wordpress-newsletter/newsletter.php&type=".$_GET['type']. "&offset=".$newpage."'>$i</a>]";
 			}else
 			{
 				echo "[$i]";
@@ -710,7 +710,7 @@ $to  = $user->email;
 
 			if($offset!=$newpage)
 			{
-				echo "[<a href='options-general.php?page=newsletter/newsletter.php&type=".$_GET['type']. "&offset=".$newpage."'>$i</a>]";
+				echo "[<a href='options-general.php?page=wordpress-newsletter/newsletter.php&type=".$_GET['type']. "&offset=".$newpage."'>$i</a>]";
 			}else
 			{
 				echo "[$i]";
